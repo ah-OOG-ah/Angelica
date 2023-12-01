@@ -4,13 +4,8 @@ import com.gtnewhorizons.angelica.AngelicaMod;
 import com.gtnewhorizons.angelica.config.AngelicaConfig;
 import com.gtnewhorizons.angelica.loading.AngelicaTweaker;
 import cpw.mods.fml.relauncher.FMLLaunchHandler;
-import me.jellysquid.mods.sodium.common.config.SodiumConfig;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 public enum Mixins {
@@ -97,7 +92,7 @@ public enum Mixins {
 
     // Required for Sodium's FluidRenderer, so it treats vanilla liquids as IFluidBlocks
     SODIUM_WISHLIST(new Builder("Sodiumer").addTargetedMod(TargetedMod.VANILLA).setSide(Side.BOTH)
-        .setPhase(Phase.EARLY).setApplyIf(() -> SodiumConfig.ENABLE_FLUID_RENDERER).addMixinClasses(
+        .setPhase(Phase.EARLY).setApplyIf(() -> AngelicaConfig.enableSodiumFluids).addMixinClasses(
         "sodium.MixinBlockLiquid")),
 
     IRIS_RENDERING(new Builder("Iris Shaders").addTargetedMod(TargetedMod.VANILLA).setSide(Side.CLIENT)
