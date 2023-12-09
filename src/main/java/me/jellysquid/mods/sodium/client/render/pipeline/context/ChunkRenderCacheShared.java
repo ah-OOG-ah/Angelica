@@ -2,6 +2,7 @@ package me.jellysquid.mods.sodium.client.render.pipeline.context;
 
 import com.gtnewhorizons.angelica.compat.mojang.BlockRenderView;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import me.jellysquid.mods.sodium.client.model.light.LightPipelineProvider;
 import me.jellysquid.mods.sodium.client.model.light.cache.HashLightDataCache;
 import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
 import me.jellysquid.mods.sodium.client.render.pipeline.ChunkRenderCache;
@@ -22,8 +23,9 @@ public class ChunkRenderCacheShared extends ChunkRenderCache {
         Minecraft client = Minecraft.getMinecraft();
 
         this.lightCache = new HashLightDataCache(world);
+        LightPipelineProvider lpp = new LightPipelineProvider(this.lightCache);
 
-        this.blockRenderer = new BlockRenderer(client);
+        this.blockRenderer = new BlockRenderer(lpp);
     }
 
     public BlockRenderer getBlockRenderer() {

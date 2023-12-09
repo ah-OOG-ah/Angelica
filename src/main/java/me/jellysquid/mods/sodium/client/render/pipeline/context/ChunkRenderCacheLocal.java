@@ -26,7 +26,7 @@ public class ChunkRenderCacheLocal extends ChunkRenderCache {
 
         LightPipelineProvider lpp = new LightPipelineProvider(lightDataCache);
 
-        this.blockRenderer = new BlockRenderer(client);
+        this.blockRenderer = new BlockRenderer(lpp);
         this.fluidRenderer = new FluidRenderer(lpp);
 
         // TODO: Sodium

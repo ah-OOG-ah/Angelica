@@ -16,22 +16,27 @@ public enum ModelQuadFacing {
     public static final int COUNT = VALUES.length;
 
     public static ModelQuadFacing fromDirection(ForgeDirection dir) {
-        switch (dir) {
-            case DOWN:
-                return DOWN;
-            case UP:
-                return UP;
-            case NORTH:
-                return NORTH;
-            case SOUTH:
-                return SOUTH;
-            case WEST:
-                return WEST;
-            case EAST:
-                return EAST;
-            default:
-                return UNASSIGNED;
-        }
+        return switch (dir) {
+            case DOWN -> DOWN;
+            case UP -> UP;
+            case NORTH -> NORTH;
+            case SOUTH -> SOUTH;
+            case WEST -> WEST;
+            case EAST -> EAST;
+            default -> UNASSIGNED;
+        };
+    }
+
+    public static ForgeDirection toDirection(ModelQuadFacing dir) {
+        return switch (dir) {
+            case DOWN -> ForgeDirection.DOWN;
+            case UP -> ForgeDirection.UP;
+            case NORTH -> ForgeDirection.NORTH;
+            case SOUTH -> ForgeDirection.SOUTH;
+            case WEST -> ForgeDirection.WEST;
+            case EAST -> ForgeDirection.EAST;
+            default -> ForgeDirection.UNKNOWN;
+        };
     }
 
     public static ModelQuadFacing fromVector(Vector3f normal) {

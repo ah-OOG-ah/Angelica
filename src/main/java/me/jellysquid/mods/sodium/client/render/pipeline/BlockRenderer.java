@@ -1,7 +1,6 @@
 package me.jellysquid.mods.sodium.client.render.pipeline;
 
 import com.gtnewhorizons.angelica.compat.mojang.BlockPos;
-import com.gtnewhorizons.angelica.compat.mojang.BlockRenderView;
 import com.gtnewhorizons.angelica.compat.mojang.MatrixStack;
 import com.gtnewhorizons.angelica.compat.nd.Quad;
 import com.gtnewhorizons.angelica.compat.nd.RecyclingList;
@@ -15,8 +14,6 @@ import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadOrientati
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderData;
 import me.jellysquid.mods.sodium.client.render.chunk.format.ModelVertexSink;
-import me.jellysquid.mods.sodium.client.util.ModelQuadUtil;
-import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
 import me.jellysquid.mods.sodium.client.util.rand.XoRoShiRoRandom;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -24,6 +21,7 @@ import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.common.util.ForgeDirection;
 import org.joml.Vector3d;
 import org.lwjgl.opengl.GL11;
 
@@ -42,13 +40,19 @@ public class BlockRenderer {
 
     private final Flags FLAGS = new Flags(true, true, true, false);
     private final RecyclingList<Quad> quadBuf = new RecyclingList<>(Quad::new);
+    private final LightPipelineProvider lpp;
+    private QuadLightData light = new QuadLightData();
 
-    public BlockRenderer(Minecraft client) {
+    public BlockRenderer(LightPipelineProvider lpp) {
         // TODO: Sodium - AO Setting
         this.useAmbientOcclusion = Minecraft.getMinecraft().gameSettings.ambientOcclusion > 0;
+        this.lpp = lpp;
     }
 
     public boolean renderModel(IBlockAccess world, Tessellator tessellator, RenderBlocks renderBlocks, Block block, int meta, BlockPos pos, ChunkModelBuffers buffers, boolean cull, long seed) {
+
+        LightMode mode = this.getLightingMode(block);
+        LightPipeline lighter = this.lpp.getLighter(mode);
 
         boolean rendered = false;
 
@@ -73,11 +77,12 @@ public class BlockRenderer {
 //            }
 //        }
 
-        this.random.setSeed(seed);
 
         final List<Quad> all = tesselatorToBakedQuadList(tessellator, pos);
 
-        for(ModelQuadFacing facing : ModelQuadFacing.VALUES) {
+        for(ForgeDirection facing : ForgeDirection.VALID_DIRECTIONS) {
+
+            this.random.setSeed(seed);
             this.renderQuadList(pos, buffers, all, facing);
         }
 
@@ -149,7 +154,9 @@ public class BlockRenderer {
     }
 
     private void renderQuadList(BlockPos pos,
-                                ChunkModelBuffers buffers, List<Quad> quads, ModelQuadFacing facing) {
+                                ChunkModelBuffers buffers, List<Quad> quads, ForgeDirection cullFace) {
+
+        ModelQuadFacing facing = ModelQuadFacing.fromDirection(cullFace);
 
         ModelVertexSink sink = buffers.getSink(facing);
         sink.ensureCapacity(quads.size() * 4);
@@ -161,9 +168,11 @@ public class BlockRenderer {
         for (int i = 0, quadsSize = quads.size(); i < quadsSize; i++) {
             Quad quad = quads.get(i);
 
-            if(quad.normal != facing)
-                continue;
+            //if(quad.normal != cullFace)
+            //    continue;
 
+            QuadLightData light = this.light;
+            this.lpp.getLighter(LightMode.SMOOTH).calculate(quad, pos, light, cullFace, quad.getFace(), quad.hasShade());
             this.renderQuad(sink, quad, renderData);
         }
 
@@ -194,9 +203,9 @@ public class BlockRenderer {
             float u = quad.getTexU(srcIndex);
             float v = quad.getTexV(srcIndex);
 
-            int lm = quad.getLight(srcIndex);
+            //int lm = quad.getLight(srcIndex);
 
-            sink.writeQuad(x, y, z, color, u, v, lm);
+            sink.writeQuad(x, y, z, color, u, v, this.light.lm[srcIndex]);
         }
 
         TextureAtlasSprite sprite = quad.rubidium$getSprite();
@@ -241,6 +250,14 @@ public class BlockRenderer {
                 flags |= 8;
             }
             return flags;
+        }
+    }
+
+    private LightMode getLightingMode(Block block) {
+        if (this.useAmbientOcclusion && block.getAmbientOcclusionLightValue() != 1.0F && block.getLightValue() == 0) {
+            return LightMode.SMOOTH;
+        } else {
+            return LightMode.FLAT;
         }
     }
 }
