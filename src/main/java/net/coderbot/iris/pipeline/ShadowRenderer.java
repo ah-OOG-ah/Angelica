@@ -30,6 +30,7 @@ import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.culling.Frustrum;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.entity.Entity;
 import net.minecraft.profiler.Profiler;
@@ -47,6 +48,7 @@ import org.lwjgl.opengl.GL30;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -357,27 +359,28 @@ public class ShadowRenderer {
 
 		// TODO: I'm sure that this can be improved / optimized.
         // TODO: Render
-//		for (Entity entity : getLevel().entitiesForRendering()) {
-//			if (!dispatcher.shouldRender(entity, frustum, cameraX, cameraY, cameraZ) || entity.isSpectator()) {
-//				continue;
-//			}
-//
-//			renderedEntities.add(entity);
-//		}
+        // TODO: Entity culling
+		for (Entity entity : getLevel().loadedEntityList) {
+			if (false/*!dispatcher.shouldRender(entity, frustum, cameraX, cameraY, cameraZ) || entity.isSpectator()*/) {
+				continue;
+			}
+
+			renderedEntities.add(entity);
+		}
 
 		profiler.endStartSection("sort");
 
         // TODO: Render
 		// Sort the entities by type first in order to allow vanilla's entity batching system to work better.
-//		renderedEntities.sort(Comparator.comparingInt(entity -> entity.getType().hashCode()));
+		renderedEntities.sort(Comparator.comparingInt(entity -> entity.getClass().hashCode()));
 
 		profiler.endStartSection("build geometry");
 
         // TODO: Render
-//		for (Entity entity : renderedEntities) {
-//			levelRenderer.invokeRenderEntity(entity, cameraX, cameraY, cameraZ, tickDelta, modelView, bufferSource);
-//			shadowEntities++;
-//		}
+		for (Entity entity : renderedEntities) {
+			RenderManager.instance.renderEntitySimple(entity, tickDelta);//(entity, cameraX, cameraY, cameraZ, tickDelta, modelView, bufferSource);
+			shadowEntities++;
+		}
 
 		renderedShadowEntities = shadowEntities;
 
@@ -567,9 +570,10 @@ public class ShadowRenderer {
 //		}
 
 //		BufferSource bufferSource = buffers.bufferSource();
+		BufferSource bufferSource = null;
 
 		if (shouldRenderEntities) {
-//			renderEntities(levelRenderer, entityShadowFrustum, bufferSource, modelView, cameraX, cameraY, cameraZ, tickDelta);
+			renderEntities(levelRenderer, entityShadowFrustum, bufferSource, modelView, cameraX, cameraY, cameraZ, tickDelta);
 		} else if (shouldRenderPlayer) {
 //			renderPlayerEntity(levelRenderer, entityShadowFrustum, bufferSource, modelView, cameraX, cameraY, cameraZ, tickDelta);
 		}
